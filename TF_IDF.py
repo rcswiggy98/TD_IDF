@@ -1,8 +1,3 @@
-#TF = query term occurrence
-#IDF = (TotalNumber of Documents/ number of documents with term in it)
-#Final Weight = TF * IDF
-
-# NEED Scikit learn
 import math
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.metrics.pairwise import cosine_similarity
@@ -66,16 +61,41 @@ docs = [
      'Title IX - Report Incident (1)'
 ]
 
-'''
-SRY NOT FINISHED YET
+# to do: load raw document txt at runtime
+#        implement clustering
+#        etc etc
 
-def tf_idf(query):
-""" Returns a numpy array whose 
+
+def tf_idf():
+"""Returns a numpy array whose 
 i,j entry is the (normalized) tf-idf
-of term j in query in doc i. 
-A dictionary of terms using fit_transform 
-is created to do this computation. 
+of term j in corpus in doc i. 
+CountVectorizer.fit_transform is used to 
+create the corpus (vocabulary).
 """
+    # CountVectorizer.transform takes iterables
+    text_docs = []
+    
+    for doc in docs:
+        filename = "TextData/" + doc + ".txt"
+        txt = open(filename,'r').read
+        text_docs.append(txt) 
+        
+    tfidf_vectorizer = TfidfVectorizer()
+    tfidf_matrix = tfidf_vectorizer.fit_transform(documents)
+
+    return tfidf_matrix
+    
+    
+def cosine_score(query):
+""" Returns a dictionary mapping
+document names in docs to a cosine 
+similarity score.
+"""
+    q = (str(query))
+    mat = tf_idf()
+    scores = {}
+    
     text_docs = []
     for doc in docs:
         filename = "TextData/" + doc + ".txt"
@@ -83,90 +103,38 @@ is created to do this computation.
         text_docs.append(txt) 
     
     count_vectorizer = CountVectorizer()
-        
-    # analyzes the documents, finds important words
-    # returns dictionary of (important word, freq)
+    # get the corpus
     count_vectorizer.fit_transform(text_docs)
+    # vectorize the query
+    q_vec_ct = count_vectorizer.transform(q)
+
+    tfidf = TfidfTransformer(norm="l2") # l2 normalization
+    tfidf.fit(freq_term_matrix)
     
-    # numpy array; rows are frequency vecs for each doc
-    # i,j entry is freq of term j in query in doc i (0 if j not in qry)
-    freq_term_matrix = count_vectorizer.transform(query).todense()
+    q_vec_tfidf = tfidf.transform(q_vec)
     
-    # matrix of tf-idf scores for query on diagonal
-    vec_tfidf = TfidfTransformer(norm="l2") # use L2 to normalize
-    vec_tfidf.fit(freq_term_matrix)
-    tf_idf_matrix = tfidf.transform(freq_term_matrix)
+    for i in range(mat.shape[0]):
+        doc_name = docs[i]
+        scores[doc_name] = cosine_similarity(q_vec_tfidf, mat[i:i+1])[[0]]
+        
+    return scores
     
-    return tf_idf_matrix
-
-def cosine_score(query):
-""" Returns a dictionary of doc names
-mapped to their cosine similarity scores 
-relative to query.
-"""
-    tf_idf_matrix = tf_idf(query)
-    cosine_scores = {}
     
-    cosine_similarity(tf_idf_matrix[0:i], tf_idf_matrix)
+def main():
+    cont = True
     
-''' 
-
-def tf_idf(query):
-    OLD stuff
-    total_docs = 0.0
-    contain_docs = 0.0
-
-    for doc in docs:
-
-        filename = "TextData/" + doc + ".txt"
-        data = open(filename,'r')
-        contain = False
-        occ = 0.0
-        total_terms = 0.0
-
-
-        for word in data.read().split():
-            total_terms = total_terms + 1.0
-            if query.lower()==word.lower():
-                contain = not contain
-                occ = occ + 1.0
-        if total_terms!=0.0:
-            tf_scores[doc] = occ#/total_terms      #DIFFERENT CHANGE !!
-        if contain:
-            contain_docs = contain_docs + 1.0
-        total_docs = total_docs + 1.0
-    if contain_docs!=0.0:
-        idf = math.log(total_docs/contain_docs)
-    return idf
-
-numQuery = input("How many words ")
-query = []
-scores = []
-
-for x in range(0,numQuery):
-    tf_scores = {}
-    tf_idf_scores = {}
-    y = raw_input("Enter Query: ")
-    query.append(y)
-    ourIDF = tf_idf(y)
-    for key in tf_scores:
-        tf_idf_scores[key] = tf_scores[key] * ourIDF
-    print(tf_idf_scores)
-    print(ourIDF)
-    scores.append(tf_idf_scores)
-
-total_TFIDF_scores = {}
-
-for key in scores[0]:
-    val = 0
-    for di in scores:
-        val+=di[key]
-    total_TFIDF_scores[key] = val
-
-
-total_TFIDF_scores = sorted(total_TFIDF_scores.iteritems(), key=lambda (k,v): (v,k),reverse=True)
-
-
-print("Top Scores")
-for x in range(0,5):
-    print(total_TFIDF_scores[x])
+    while cont:
+        prompt = input("Enter query or press 'q' to quit: ")
+        if prompt == q:
+            cont = False
+            break
+        else:
+            cosine_scores = sorted(cosine_score(prompt).iteritems(), 
+                                   key = lambda (k,v):(v,k), reverse = True)
+            print("Top scores")
+            for x in range(5):
+                print(cosine_scores[x])
+               
+                
+if __name__ == '__main__':
+    main()
