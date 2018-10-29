@@ -90,7 +90,7 @@ create the corpus (vocabulary).
 def cosine_score(query):
 """ Returns a dictionary mapping
 document names in docs to a cosine 
-similarity score.
+similarity score relative to query.
 """
     q = (str(query))
     mat = tf_idf()
