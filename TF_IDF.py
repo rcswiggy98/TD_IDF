@@ -111,7 +111,7 @@ similarity score relative to query.
     tfidf = TfidfTransformer(norm="l2") # l2 normalization
     tfidf.fit(freq_term_matrix)
     
-    q_vec_tfidf = tfidf.transform(q_vec)
+    q_vec_tfidf = tfidf.transform(q_vec_ct)
     
     for i in range(mat.shape[0]):
         doc_name = docs[i]
